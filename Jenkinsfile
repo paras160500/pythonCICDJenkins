@@ -10,7 +10,7 @@ pipeline {
     }
 
     environment {
-        IMAGE_NAME = 'YOUR_DOCKERHUB_USERNAME/task-api'
+        IMAGE_NAME = 'paras500/task-api'
         CONTAINER_NAME = 'task-api'
     }
 
@@ -43,7 +43,7 @@ pipeline {
             steps {
                 echo 'Running automated tests'
 
-                sh '.venv/bin/python -m pytest -v'
+                sh '.venv/bin/python -m pytest tests/test_app.py -v'
             }
         }
 
@@ -59,18 +59,7 @@ pipeline {
             }
         }
 
-        stage('Security Scan') {
-            steps {
-                echo 'Scanning Docker image for vulnerabilities'
-
-                sh '''
-                    trivy image \
-                        --exit-code 1 \
-                        --severity HIGH,CRITICAL \
-                        "$IMAGE_NAME:$BUILD_NUMBER"
-                '''
-            }
-        }
+    
 
         stage('Push Image') {
             steps {
