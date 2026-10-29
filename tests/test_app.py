@@ -1,13 +1,47 @@
-from app import add 
+import pytest
+from fastapi.testclient import TestClient
 
-def test_add_positive_numbers():
-    assert add(2,3) == 5 
+from app.main import app, tasks
 
-def test_add_zero():
-    assert add(0, 0) == 0
 
-def test_add_negative_numbers():
-    assert add(-2, -3) == -5
+@pytest.fixture(autouse=True)
+def reset_tasks():
+    tasks.clear()
+    yield
+    tasks.clear()
 
-def test_add_mixed_numbers():
-    assert add(-2, 5) == 3
+
+client = TestClient(app)
+
+
+def test_health_check():
+    response = client.get("/health")
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "healthy"}
+
+
+def test_create_task():
+    response = client.post(
+        "/tasks",
+        json={"title": "Learn Jenkins"},
+    )
+
+    assert response.status_code == 201
+    assert response.json()["title"] == "Learn Jenkins"
+    assert response.json()["id"] == 1
+
+
+def test_list_tasks():
+    client.post("/tasks", json={"title": "Build Docker image"})
+
+    response = client.get("/tasks")
+
+    assert response.status_code == 200
+    assert len(response.json()) == 1
+
+
+def test_task_not_found():
+    response = client.get("/tasks/999")
+
+    assert response.status_code == 404
